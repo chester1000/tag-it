@@ -38,6 +38,7 @@
 
             // Used for autocomplete, unless you override `autocomplete.source`.
             availableTags     : [],
+            _relatedIds       : [],
 
             // Use to override or add any options to the autocomplete widget.
             //
@@ -136,9 +137,21 @@
                 this.tagInput.attr('placeholder', this.options.placeholderText);
             }
 
+            if( !(this.options.availableTags instanceof Array) ) {
+
+                var l = [], r = [];
+                $.each(this.options.availableTags, function(a,b){
+                    r.push(a);
+                    l.push(b);
+                });
+                this.options.availableTags = l;
+                this.options._relatedIds = r;
+            }
+
             if (!this.options.autocomplete.source) {
                 this.options.autocomplete.source = function(search, showChoices) {
                     var filter = search.term.toLowerCase();
+
                     var choices = $.grep(this.options.availableTags, function(element) {
                         // Only match autocomplete options that begin with the search term.
                         // (Case insensitive.)
@@ -399,6 +412,8 @@
                 return false;
             }
 
+            // TODO: check if on the list
+
             if (!this.options.allowDuplicates && !this._isNew(value)) {
                 var existingTag = this._findTagByLabel(value);
                 if (this._trigger('onTagExists', null, {
@@ -417,7 +432,13 @@
                 return false;
             }
 
+            var idx = this.options.availableTags.indexOf(value);
+            if( idx==-1 ) return;
+            else if( this.options._relatedIds.length ) idx = this.options._relatedIds[idx];
+            else idx = false;
+
             var label = $(this.options.onTagClicked ? '<a class="tagit-label"></a>' : '<span class="tagit-label"></span>').text(value);
+            if( idx!==false ) label.data('value', idx)
 
             // Create tag.
             var tag = $('<li></li>')
